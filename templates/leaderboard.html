@@ -1,0 +1,32 @@
+{% extends "Main/main.html" %}
+
+{% block Content %}
+<center><table class="leaderboard" border="1" cellpadding="10">
+    <tr>
+    <th>Rank</th>
+    <th>PL</th>
+    <th>Points</th>
+  </tr>
+  
+</table></center>
+
+<script>
+function updateLeaderboard()
+{
+var table = "<tr><th>Rank</th><th>PL</th><th>Points</th></tr>";
+$.getJSON("/b/leaderboard", function(data) {
+    $.each(data.leaderboard, function(key, val) {
+        table += "<tr><td>" + val.rank + "</td><td>" + val.platoon + "</td><td>" + val.points + "</td></tr>"
+    });
+    $("table.leaderboard").html(table);
+
+});
+}
+
+setInterval(updateLeaderboard, 5000);
+updateLeaderboard();
+
+</script>
+
+
+{% endblock %}

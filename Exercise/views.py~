@@ -1,0 +1,106 @@
+from Exercise.models import *
+from django.http import HttpResponse
+import simplejson
+from datetime import datetime
+from django.shortcuts import render_to_response
+from django.template import RequestContext
+
+def timesince(dt, default="just now"):
+    """
+    Returns string representing "time since" e.g.
+    3 days ago, 5 hours ago etc. -- thanks to: http://flask.pocoo.org/snippets/33/
+    """
+
+    now = datetime.utcnow()
+    diff = now - dt.replace(tzinfo=None)
+    
+    periods = (
+        (diff.days / 365, "year", "years"),
+        (diff.days / 30, "month", "months"),
+        (diff.days / 7, "week", "weeks"),
+        (diff.days, "day", "days"),
+        (diff.seconds / 3600, "hour", "hours"),
+        (diff.seconds / 60, "minute", "minutes"),
+        (diff.seconds, "second", "seconds"),
+    )
+
+    for period, singular, plural in periods:
+        
+        if period:
+            return "%d %s ago" % (period, singular if period == 1 else plural)
+
+    return default
+
+## Background Views (appended with B_)
+
+def B_CodeInput(request):
+    ''' Send a POST request w/ 'code' to try to input code to DB and verify, responds with error=True if wrong '''
+    if request.method == 'GET':
+        c = Claim_Code(request.GET['code'])
+        if type(c) == str:
+            return HttpResponse(simplejson.dumps({'error': True, 'code': c}), 'application/json')
+        else:
+            return HttpResponse(simplejson.dumps({'error': False}), 'application/json')
+        
+
+def B_LastActions(request):
+    ''' GET request with 'to' to indicate how far back to show the actions '''
+    actions = []
+    for action in Action.objects.order_by('-time')[0:int(request.GET['to'])]:
+        if request.GET.get('time', 'since') == '24':
+            time = str(str(action.time.hour) + ":" + str(action.time.minute))
+        else:
+            time = str(timesince(action.time))
+        actions += [{
+            "section": str(action.section.number),
+            "time": time,
+            "action": str(action.action),
+            "points": str(action.points),
+            }]
+    return HttpResponse(simplejson.dumps({"actions": actions}), 'application/json')
+
+
+def B_Leaderboard(request):
+    leaderboard = []
+    rank = 1
+    for platoon in sorted(Platoon.objects.all(), key=lambda a: a.total_points(), reverse=True):
+        leaderboard += [{
+            "rank": str(rank),
+            "platoon": str(platoon),
+            "points": str(platoon.total_points()),
+            }]
+        rank += 1
+    return HttpResponse(simplejson.dumps({"leaderboard": leaderboard}), 'application/json')
+
+## Document Generation Views
+
+def D_Checkpoint(request, number):
+    checkpoint = Checkpoint.objects.get(number=number)
+    codes = Checkpoint_Code.objects.filter(checkpoint=checkpoint).order_by('section__number')
+
+    return render_to_response('Documents/checkpoint.html', {"checkpoint":checkpoint, "codes":codes}, context_instance=RequestContext(request))
+
+def D_Ambush(request, number):
+    section = Section.objects.get(number=number)
+    return render_to_response('Documents/ambush.html', {"section": section}, context_instance=RequestContext(request))
+
+def D_CheckpointCodes(request):
+    codes = Checkpoint_Code.objects.all().order_by('code')
+    return render_to_response('Documents/code_list.html', {"codes":codes}, context_instance=RequestContext(request))
+
+def D_AmbushCodes(request):
+    sections = Section.objects.all().order_by('ambush_code')
+    return render_to_response('Documents/ambush_list.html', {"sections":sections}, context_instance=RequestContext(request))
+
+## Main Views
+
+def Leaderboard(request):
+    return render_to_response('leaderboard.html', {"title": "Leaderboard"}, context_instance=RequestContext(request))
+
+def InputCode(request):
+    return render_to_response('input_code.html', {"title": "Input Code"}, context_instance=RequestContext(request))
+
+def ActionLog(request):
+    return render_to_response('log.html', {"title": "Action Log"}, context_instance=RequestContext(request))
+    
+    

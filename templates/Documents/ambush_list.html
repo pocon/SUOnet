@@ -1,0 +1,24 @@
+<header><title>SUO Ambush Code List</title></header>
+
+<body>
+  <h1><center>SUO's Exercise Ambush Code List</center></h1>
+  <center>
+    <br />
+    <table border="1" cellpadding="10">
+      <tr>
+	<th>Code</th>
+	<th>Section #</th>
+	<th>Section Leader</th>
+      </tr>
+      {% for section in sections %}
+      <tr>
+	<td>{{section.ambush_code}}</td>
+	<td>{{section}}</td>
+	<td>{{section.leader}}</td>
+      </tr>
+      {% endfor %}
+
+     </table>
+   </center>
+
+</body>

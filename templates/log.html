@@ -1,0 +1,32 @@
+{% extends 'Main/main.html' %}
+
+{% block Content %}
+<center><table class="action_log" border="1" cellpadding="10">
+    <tr>
+    <th>Time</th>
+    <th>Section</th>
+    <th>Action</th>
+    <th>Points</th>
+  </tr>
+  
+</table></center>
+
+<script>
+function updateActionLog()
+{
+var table = "<tr><th>Time</th><th>Section</th><th>Action</th><th>Points</th></tr>";
+$.getJSON("/b/last_actions/?to=1000000000000&&time=24", function(data) {
+    $.each(data.actions, function(key, val) {
+        table += "<tr><td>" + val.time + "</td><td>" + val.section + "</td><td>" + val.action + "</td><td>" + val.points + "</td></tr>"
+    });
+    $("table.action_log").html(table);
+
+});
+}
+
+setInterval(updateActionLog, 5000);
+
+updateActionLog();
+
+</script>
+{% endblock %}

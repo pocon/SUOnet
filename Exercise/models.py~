@@ -1,0 +1,163 @@
+from django.db import models
+from django.db.models import Q
+import datetime
+
+
+class Setting(models.Model):
+    key = models.CharField(max_length=256)
+    value = models.CharField(max_length=1024)
+
+    def __unicode__(self):
+        return self.key + ": " + self.value
+
+class Checkpoint_Code(models.Model):
+    checkpoint = models.ForeignKey('Checkpoint')
+    section = models.ForeignKey('Section')
+    code = models.CharField(max_length=5)
+    claimed = models.BooleanField(default=False)
+
+    def __unicode__(self):
+        return str(self.checkpoint) + " - " + str(self.section)
+
+class Checkpoint(models.Model):
+    number = models.IntegerField()
+    grid = models.IntegerField(max_length=6)
+    points = models.IntegerField()
+    group = models.IntegerField()
+    one_use = models.BooleanField(default=False)
+    quote = models.CharField(max_length=4096)
+
+    def __unicode__(self):
+        return "Checkpoint No. " + str(self.number)
+
+    def times_claimed(self):
+        return len(Checkpoint_Code.objects.filter(checkpoint=self, claimed=True))
+
+class Action(models.Model):
+    section = models.ForeignKey('Section')
+    time = models.DateTimeField()
+    action = models.CharField(max_length=4096)
+    points = models.IntegerField()
+
+    def __unicode__(self):
+        return "Section " + str(self.section.number) + " " + self.action + " = " + str(self.points)
+
+    def save(self, *args, **kwargs):
+        if not self.pk:
+            self.time = datetime.datetime.now()
+
+        super(Action, self).save(*args, **kwargs)
+
+class Section(models.Model):
+    number = models.IntegerField()
+    platoon = models.ForeignKey('Platoon')
+    leader = models.CharField(max_length=256)
+    callsign = models.CharField(max_length=30, default="TBD")
+    ambush_code = models.CharField(max_length=3, default='AAA')
+
+    def actions(self):
+        return Action.objects.filter(section=self)
+
+    def total_points(self):
+        return sum(act.points for act in self.actions())
+
+    def __unicode__(self):
+        return str(self.number) + " Section [" + str(self.platoon.number) + " Platoon]"
+
+
+
+class Platoon(models.Model):
+    number = models.IntegerField()
+    cmdr = models.CharField(max_length=256)
+    company = models.CharField(max_length=1)
+
+    def actions(self):
+        sections = Section.objects.filter(platoon=self)
+        queries = [Q(section=section) for section in sections]
+        query = queries.pop()
+        for item in queries:
+            query |= item
+
+        return Action.objects.filter(query)
+
+    def total_points(self):
+        return sum(sec.total_points() for sec in Section.objects.filter(platoon=self))
+
+    def __unicode__(self):
+        return str(self.number) + " Platoon"
+
+
+### Functions To Assist Everything ###
+
+def Settings(key):
+    return Setting.objects.get(key=key).value
+
+def Claim_Checkpoint(code):
+    '''
+    Looks to see if a checkpoint exists. If not, error code string is returned. If it does exist, the action is logged and action returned.
+    '''
+
+    try:
+        c = Checkpoint_Code.objects.get(code=code)
+
+    except:
+        return "Checkpoint Doesn't Exist"
+
+    if c.claimed:
+        return "Checkpoint already claimed"
+
+    a = Action(
+        section=c.section,
+        action="Captured Checkpoint No. " + str(c.checkpoint.number),
+        points = c.checkpoint.points,
+        )
+    a.save()
+    c.claimed = True
+    c.save()
+    if c.checkpoint.one_use:
+        for checkpoint in Checkpoint_Code.objects.filter(checkpoint=c.checkpoint):
+            checkpoint.claimed = True
+            checkpoint.save()
+
+    return a
+
+def Claim_Ambush(code):
+    '''
+    Checks if an ambush is possible. If not, returns an error code. If so, makes the actions and returns the action of the ambusher
+    '''
+    
+    try:
+        ambushers = Section.objects.get(ambush_code=code[0:3])
+        ambushed = Section.objects.get(ambush_code=code[3:6])
+
+    except:
+        return "Ambush Code Doesn't Exist"
+
+    a1 = Action(
+        section = ambushers,
+        action = "Ambushed Section No. " + str(ambushed.number),
+        points = Settings("ambush_award"),
+        )
+    a1.save()
+    a2 = Action(
+        section = ambushed,
+        action = "Ambushed By Section No. " + str(ambushers.number),
+        points = int(Settings("ambush_demerit")),
+        )
+    a2.save()
+
+    return a1
+
+def Claim_Code(code):
+    '''
+    Send a Code. Will return string if there was an error. Will return the action if something done.
+    '''
+
+    if len(code) == 5:
+        return Claim_Checkpoint(code.upper())
+
+    elif len(code) == 6:
+        return Claim_Ambush(code.upper())
+
+    else:
+        return "Code Not Of Correct Length"

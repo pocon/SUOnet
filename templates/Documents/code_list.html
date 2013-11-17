@@ -1,0 +1,26 @@
+<header><title>SUO Checkpoint Code List</title></header>
+
+<body>
+  <h1><center>SUO's Exercise Checkpoint Code List</center></h1>
+  <center>
+    <br />
+    <table border="1" cellpadding="10">
+      <tr>
+	<th>Code</th>
+	<th>Section #</th>
+	<th>Checkpoint</th>
+	<th>Points</th>
+      </tr>
+      {% for code in codes %}
+      <tr>
+	<td>{{code.code}}</td>
+	<td>{{code.section}}</td>
+	<td>{{code.checkpoint}}</td>
+	<td>{{code.checkpoint.points}}</td>
+      </tr>
+      {% endfor %}
+
+     </table>
+   </center>
+
+</body>

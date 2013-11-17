@@ -1,0 +1,34 @@
+from django.conf.urls import patterns, include, url
+from django.views.generic.base import RedirectView
+
+# Uncomment the next two lines to enable the admin:
+from django.contrib import admin
+admin.autodiscover()
+
+urlpatterns = patterns('',
+    # Examples:
+    # url(r'^$', 'SUOnet.views.home', name='home'),
+    # url(r'^SUOnet/', include('SUOnet.foo.urls')),
+
+    # Uncomment the admin/doc line below to enable admin documentation:
+    url(r'^admin/doc/', include('django.contrib.admindocs.urls')),
+
+    # Uncomment the next line to enable the admin:
+    url(r'^admin/', include(admin.site.urls)),
+
+    url(r'^$', RedirectView.as_view(url='/leaderboard/', permanent=True)),
+
+    url(r'^b/leaderboard/', 'Exercise.views.B_Leaderboard'),
+    url(r'^b/last_actions/', 'Exercise.views.B_LastActions'),
+    url(r'^b/input/', 'Exercise.views.B_CodeInput'),
+
+    url(r'^d/checkpoint/(?P<number>\d+)/$', 'Exercise.views.D_Checkpoint'),
+    url(r'^d/ambush/(?P<number>\d+)/$', 'Exercise.views.D_Ambush'),
+    url(r'^d/checkpoint_codes/$', 'Exercise.views.D_CheckpointCodes'),
+    url(r'^d/ambush_codes/$', 'Exercise.views.D_AmbushCodes'),
+    url(r'^d/base/(?P<number>\d+)/$', 'Exercise.views.D_Base'),
+
+    url(r'^leaderboard/', 'Exercise.views.Leaderboard'),
+    url(r'^input/', 'Exercise.views.InputCode'),
+    url(r'^log/', 'Exercise.views.ActionLog'),
+)

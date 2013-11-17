@@ -1,0 +1,25 @@
+<header><title>SUO Checkpoint {{checkpoint.number}}</title></header>
+
+<body>
+  <h1><center>SUO's Exercise Checkpoint {{checkpoint.number}}</center></h1>
+  <center>
+  <i>{{checkpoint.quote}} </i>
+    <br /><br />
+    <table border="1" cellpadding="10">
+      <tr>
+	<th>Section #</th>
+	<th>Section Leader</th>
+	<th>Code</th>
+      </tr>
+      {% for code in codes %}
+      <tr>
+	<td>{{code.section}}</td>
+	<td>{{code.section.leader}}</td>
+	<td>{{code.code}}</td>
+      </tr>
+      {% endfor %}
+
+     </table>
+   </center>
+
+</body>

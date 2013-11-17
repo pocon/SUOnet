@@ -1,0 +1,21 @@
+<header><title>Checkpoint 1</title></header>
+
+<body>
+  <h1><center>Checkpoint 1</center></h1>
+  <center>
+    <img src="http://imgs.xkcd.com/comics/anti_glass.png"></img>
+    <br />
+    <table border="1" cellpadding="5">
+      <tr>
+	<th>Section #</th>
+	<th>Code</th>
+      </tr>
+      <tr>
+	<td>1</td>
+	<td>123456</td>
+      </tr>
+
+     </table>
+   </center>
+
+</body>

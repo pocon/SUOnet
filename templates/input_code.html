@@ -1,0 +1,53 @@
+{% extends 'Main/main.html' %}
+
+{% block Content %}
+<center><br /><form name="codeinput">
+<input class="inputcode" type="text" name="code">
+<input type="submit" value="Submit">
+</form></center>
+
+<center><table class="action_log" border="1" cellpadding="10">
+    <tr>
+    <th>Time</th>
+    <th>Section</th>
+    <th>Action</th>
+    <th>Points</th>
+  </tr>
+  
+</table></center>
+
+<script>
+function updateActionLog()
+{
+var table = "<tr><th>Time</th><th>Section</th><th>Action</th><th>Points</th></tr>";
+$.getJSON("/b/last_actions/?to=5", function(data) {
+    $.each(data.actions, function(key, val) {
+        table += "<tr><td>" + val.time + "</td><td>" + val.section + "</td><td>" + val.action + "</td><td>" + val.points + "</td></tr>"
+    });
+    $("table.action_log").html(table);
+
+});
+}
+
+setInterval(updateActionLog, 1000);
+
+updateActionLog();
+
+
+$('form[name=codeinput]').submit(function(){
+ $.getJSON("/b/input/?code=" + $(this).find('input.inputcode').val(), function(data) {
+    if (data.error==true)
+    {
+      alert("Incorrect Code: " + data.code);
+    }
+});
+$(this).find('input.inputcode').val('');
+updateActionLog();
+$('form[name=codeinput]').find('input.inputcode').focus();
+return false;
+})
+
+$('form[name=codeinput]').find('input.inputcode').focus();
+
+</script>
+{% endblock %}
